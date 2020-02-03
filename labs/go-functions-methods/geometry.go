@@ -6,24 +6,69 @@
 // Package geometry defines simple types for plane geometry.
 //!+point
 package geometry
+import (
+	"fmt"
+	"log"
+	"math"
+	"math/rand"
+	"os"
+	"strconv"
+)
 
-import "math"
+type Point struct{ x, y float64 }
 
-type Point struct{ X, Y float64 }
+func (p Point) X () float64 {
+	return p.x
+}
 
-// traditional function
+func (p Point) Y () float64 {
+	return p.y
+}
+
 func Distance(p, q Point) float64 {
-	return math.Hypot(q.X-p.X, q.Y-p.Y)
+	return math.Hypot(q.X() - p.X(), q.Y() - p.Y())
 }
 
-// same thing, but as a method of the Point type
 func (p Point) Distance(q Point) float64 {
-	return math.Hypot(q.X-p.X, q.Y-p.Y)
+	return math.Hypot(q.X() - p.X(), q.Y() - p.Y())
 }
 
-//!-point
+func (p Point) checkSegment (q Point, r Point) bool{
+	vec_1 := Point{q.X() - p.X(), q.Y() - p.Y()}
+	vec_2 := Point{r.X() - p.X(), r.Y() - p.Y()}
+	cross := vec_1.X() * vec_2.Y() - vec_2.X() * vec_1.Y()
+	if cross < 0.1{
+		return true
+	}else{
+		return false
+	}
+}
 
-//!+path
+func doIntersect (path Path, lastIndex int) bool {
+	itIntersect := false
+	for i := lastIndex ; i >= 2; i--{
+		p := path[i-2]
+		q := path[i-1]
+		r := path[i]
+		if p.checkSegment(q, r) {
+			itIntersect = true
+			break
+		}
+		if q.checkSegment(p, r) {
+			itIntersect = true
+			break
+		}
+	}
+	return itIntersect
+}
+
+func (p Point) onSegment (q Point, r Point) bool {
+	if q.X() <= math.Max(p.X(), r.X()) && q.X() >= math.Min(p.X(), r.X()) &&
+		q.Y() <= math.Max(p.Y(), r.Y()) && q.Y() >= math.Min(p.Y(), r.Y()){
+		return true
+	}
+	return false
+}
 
 // A Path is a journey connecting the points with straight lines.
 type Path []Point
@@ -39,4 +84,36 @@ func (path Path) Distance() float64 {
 	return sum
 }
 
-//!-path
+func (path Path) printVerticles () {
+	fmt.Println("Figure's vertices")
+	for _, pt := range path {
+		fmt.Printf("(%f, %f)\n" ,pt.X(), pt.Y())
+	}
+}
+
+
+func main (){
+	var sides, err = strconv.Atoi(os.Args[1])
+	if err != nil{
+		log.Fatal(err)
+	}else{
+		fmt.Printf("Generating a [\"%s\"] sides figure \n", os.Args[1])
+
+		path := make(Path, sides)
+		for i := 0; i < sides; i++{
+			x := -100 + rand.Float64() * (100)
+			y := -100 + rand.Float64() * (100)
+			path[i] = Point{x, y}
+			if i >= 2 {
+				if doIntersect(path, i){
+					i--
+				}
+			}
+		}
+		path.printVerticles()
+		fmt.Println("Figure's Perimeter")
+		fmt.Print(path.Distance())
+	}
+}
+
+
