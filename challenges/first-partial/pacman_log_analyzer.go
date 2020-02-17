@@ -18,7 +18,6 @@ type generalInfo struct {
 	instPackg, remPackg, upgrPackg, currInstalled int
 }
 
-
 func  generateFile(packages map[string]*data, info *generalInfo, keys []string) {
 	file, err := os.Create("packages_report.txt")
 	if err != nil {
@@ -42,7 +41,7 @@ func  generateFile(packages map[string]*data, info *generalInfo, keys []string) 
 		data := "- Package Name        : " + val + "\n"
 		data += "  - Install date      : " + info.installedDate + "\n"
 		data += "  - Last update date  : " + info.lastUpdate + "\n"
-		data += "  - How many updates  : " + string(info.manyUpdates) + "\n"
+		data += "  - How many updates  : " + strconv.Itoa(info.manyUpdates) + "\n"
 		data += "  - Removal date      : " + info.removalDate + "\n"
 		_, err := file.WriteString(data)
 		if err != nil {
@@ -59,50 +58,58 @@ func  generateFile(packages map[string]*data, info *generalInfo, keys []string) 
 	}
 }
 
+func readMetadata(lines [] string) (map[string]*data, generalInfo) {
+	packages := make(map[string] *data)
+	info := generalInfo{0, 0, 0, 0}
+	for _, value := range lines{
+		separated := strings.Fields(value)
+		if len(separated) >= 5{
+			switch separated[3] {
+			case "installed":{
+				date := separated[0][1:] + " " + separated[1][:len(separated[1]) - 1]
+				packages[separated[4]] = &data{date, date, "-", 0}
+				info.instPackg++
+			}
+			case "upgraded" :{
+				date := separated[0][1:] + " " + separated[1][:len(separated[1]) - 1]
+				packages[separated[4]].manyUpdates++
+				packages[separated[4]].lastUpdate = date
+				if packages[separated[4]].manyUpdates == 1 {
+					info.upgrPackg++
+				}
+			}
+			case "removed" :{
+				date := separated[0][1:] + " " + separated[1][:len(separated[1]) - 1]
+				packages[separated[4]].removalDate = date
+				info.remPackg++
+			}
+			case "reinstalled" : {
+				date := separated[0][1:] + " " + separated[1][:len(separated[1]) - 1]
+				packages[separated[4]].removalDate = "-"
+				packages[separated[4]].installedDate = date
+				packages[separated[4]].lastUpdate = date
+				info.remPackg--
+			}
+			}
+		}
+	}
+	return packages, info
+}
+
 func main() {
 	fmt.Println("Pacman Log Analyzer")
-
 	if len(os.Args) < 2 {
 		fmt.Println("You must send at least one pacman log file to analize")
 		fmt.Println("usage: ./pacman_log_analizer <logfile>")
 		os.Exit(1)
 	}
-
 	text, err := ioutil.ReadFile(os.Args[1])
-
 	if err != nil {
 		log.Fatal("Unable to read file: %v", err)
 	}
 	lines := strings.Split(string(text), "\n")
-	packages := make(map[string] *data)
-	info := generalInfo{0, 0, 0, 0}
+	packages, info := readMetadata(lines)
 
-	for _, value := range lines{
-		separated := strings.Fields(value)
-		if len(separated) >= 5{
-			switch separated[3] {
-				case "installed":{
-					date := separated[0][1:] + separated[1][:len(separated[1]) - 1]
-					packages[separated[4]] = &data{date, date, "-", 0}
-					info.instPackg++
-				}
-				case "upgraded" :{
-					date := separated[0][1:] + separated[1][:len(separated[1]) - 1]
-					packages[separated[4]].manyUpdates++
-					packages[separated[4]].lastUpdate = date
-					if packages[separated[4]].manyUpdates == 1 {
-						info.upgrPackg++
-					}
-
-				}
-				case "removed" :{
-					date := separated[0][1:] + separated[1][:len(separated[1]) - 1]
-					packages[separated[4]].removalDate = date
-					info.remPackg++
-				}
-			}
-		}
-	}
 	info.currInstalled = info.instPackg - info.remPackg
 	fmt.Println(info.currInstalled)
 	keys := make([]string, 0, len(packages))
