@@ -13,7 +13,7 @@ func createChannel (conn io.Reader) chan int {
 	go func() {
 		io.Copy(os.Stdout, conn) // NOTE: ignoring errors
 		log.Println("done")
-		done <- 2 // signal the main goroutine
+		done <- 1 // signal the main goroutine
 	}()
 	return done
 }
