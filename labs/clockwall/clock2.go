@@ -41,7 +41,7 @@ func handleConn(c net.Conn, timeZone string) {
 
 func main () {
 	ip := flag.String("port", "m", "the port")
-	timeZone := flag.String("TZ"	, "x", "time zone")
+	timeZone := flag.String("TZ"	, "y", "time zone")
 
 	flag.Parse()
 	listener, err := net.Listen("tcp", "localhost:" + *ip)
