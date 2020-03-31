@@ -1,6 +1,21 @@
 Lab - ClockWall
 ===================
-
+How to run program
+---------------------------------------
+The program doesn't use variables of environment as some of my classmates did. As the documentation at the bottom of this file, I use flags to indicate what the parameters.
+Server side
+```
+go run clock2.go -port 8100 TZ=US/Eastern &
+go run clock2.go -port 9200 TZ=Asia/Tokyo &
+go run clock2.go -port 8500 TZ=Europe/London &
+.
+.
+.
+```
+Client side
+```
+go run clockWall.go // it doesn't require the port params
+```
 Modify the [clock2.go](./clock2.go) to accept the `-port` parameter and write a program [clockWall.go](clockWall.go)
 that acts as a client of several clock servers at once.
 
