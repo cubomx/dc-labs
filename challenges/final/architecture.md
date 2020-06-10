@@ -1,2 +1,2 @@
-Architecture Document
-=====================
+# Architecture
+![Screenshot](architecture.png)
